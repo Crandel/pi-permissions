@@ -4,10 +4,10 @@ import * as path from "node:path";
 import {
   getPiLabGlobalDir,
   getPiLabLocalDir,
-  readPiProjectSettings,
-  readPiUserSettings,
 } from "./paths";
 import {
+  readPiUserSettings,
+  readPiProjectSettings,
   type PiSettings,
 } from "./settings"
 
