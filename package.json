@@ -1,0 +1,47 @@
+{
+  "name": "@pi-lab/permissions",
+  "version": "1.0.2",
+  "description": "Permission system extension for pi coding agent",
+  "keywords": [
+    "pi-package"
+  ],
+  "license": "MIT",
+  "author": "anthod0",
+  "homepage": "https://github.com/anthod0/pi-lab/tree/main/packages/permissions",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anthod0/pi-lab.git",
+    "directory": "packages/permissions"
+  },
+  "bugs": {
+    "url": "https://github.com/anthod0/pi-lab/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./dist/index.mjs"
+    ]
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "tsx --test src/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "catalog:",
+    "@pi-lab/utils": "workspace:*",
+    "@sinclair/typebox": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "catalog:",
+    "@sinclair/typebox": "catalog:"
+  },
+  "dependencies": {
+    "minimatch": "catalog:"
+  }
+}
