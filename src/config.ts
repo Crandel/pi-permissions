@@ -6,8 +6,10 @@ import {
   getPiLabLocalDir,
   readPiProjectSettings,
   readPiUserSettings,
+} from "./paths";
+import {
   type PiSettings,
-} from "@pi-lab/utils";
+} from "./settings"
 
 export type Action = "allow" | "deny" | "ask";
 
