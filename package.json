@@ -1,20 +1,20 @@
 {
-  "name": "@pi-lab/permissions",
-  "version": "1.0.2",
+  "name": "pi-permissions",
+  "version": "1.0.0",
   "description": "Permission system extension for pi coding agent",
   "keywords": [
     "pi-package"
   ],
   "license": "MIT",
-  "author": "anthod0",
-  "homepage": "https://github.com/anthod0/pi-lab/tree/main/packages/permissions",
+  "author": "Crandel",
+  "homepage": "https://github.com/Crandel/pi-permissions",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anthod0/pi-lab.git",
+    "url": "git+https://github.com/Crandel/pi-permissions.git",
     "directory": "packages/permissions"
   },
   "bugs": {
-    "url": "https://github.com/anthod0/pi-lab/issues"
+    "url": "https://github.com/Crandel/pi-permissions"
   },
   "type": "module",
   "files": [
@@ -31,17 +31,16 @@
     "test": "tsx --test src/**/*.test.ts"
   },
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "catalog:",
-    "@pi-lab/utils": "workspace:*",
-    "@sinclair/typebox": "catalog:",
-    "tsdown": "catalog:",
-    "tsx": "catalog:"
+    "@earendil-works/pi-coding-agent": "^0.80.6",
+    "@sinclair/typebox": "^0.34.49",
+    "tsdown": "^0.22.3",
+    "tsx": "^4.22.4"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "catalog:",
-    "@sinclair/typebox": "catalog:"
+    "@earendil-works/pi-coding-agent": "^0.80.6",
+    "@sinclair/typebox": "^0.34.49"
   },
   "dependencies": {
-    "minimatch": "catalog:"
+    "minimatch": "^10.2.5"
   }
 }
