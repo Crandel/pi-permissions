@@ -1,0 +1,175 @@
+{
+  "rules": [
+    {
+      "action": "deny",
+      "match": {
+        "tool": "bash",
+        "params": {
+          "command": "rm\\s+-rf"
+        }
+      },
+      "message": "Block rm -rf",
+      "priority": 10
+    },
+    {
+      "action": "deny",
+      "match": {
+        "tool": "read",
+        "paths": [
+          "/home/cadmon",
+          "/etc"
+        ]
+      },
+      "message": "Forbid reading in sensitive paths",
+      "priority": 10
+    },
+    {
+      "action": "deny",
+      "match": {
+        "tool": "find",
+        "paths": [
+          "/home/cadmon",
+          "/etc"
+        ]
+      },
+      "message": "Forbid find in sensitive paths",
+      "priority": 10
+    },
+    {
+      "action": "deny",
+      "match": {
+        "tool": "grep",
+        "paths": [
+          "/home/cadmon",
+          "/etc"
+        ]
+      },
+      "message": "Forbid grep in sensitive paths",
+      "priority": 10
+    },
+    {
+      "action": "deny",
+      "match": {
+        "tool": "*",
+        "paths": [
+          "/home/cadmon",
+          "/etc"
+        ]
+      },
+      "message": "Deny all access to home and /etc directories",
+      "priority": 10
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "read",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow reading projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "grep",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow greping in projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "find",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow finding in projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "ast_grep_search",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow greping in projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "symbol_search",
+        "pathParam": "paths",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow searching in projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "read_symbol",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow reading in projects files",
+      "priority": 5
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "read_enclosing",
+        "paths": [
+          "/data/work/projects"
+        ]
+      }
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "lsp_navigation",
+        "paths": [
+          "/data/work/projects"
+        ]
+      }
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "lsp_diagnostics",
+        "pathParam": "paths",
+        "paths": [
+          "/data/work/projects"
+        ]
+      }
+    },
+    {
+      "action": "allow",
+      "match": {
+        "tool": "module_report",
+        "paths": [
+          "/data/work/projects"
+        ]
+      },
+      "message": "Allow module reports in projects files",
+      "priority": 5
+    },
+    {
+      "action": "ask",
+      "match": { "tool": "*" },
+      "message": "No specific rule matched — confirm this action",
+      "priority": -1
+    }
+  ]
+}
