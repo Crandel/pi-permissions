@@ -66,7 +66,7 @@ function loadRulesFromSettings(readSettings: () => PiSettings | null, debug: boo
 
 export function loadConfig(cwd: string, home = os.homedir()): PermissionConfig {
   const globalConfigPath = path.join(getPermissionGlobalDir(home), "permissions.json");
-  const localConfigPath = path.join(getPermissionsLocalDir(cwd), "permissions.json");
+  const localConfigPath = path.join(getPermissionLocalDir(cwd), "permissions.json");
 
   const globalRules = loadRulesFromFile(globalConfigPath, true);
   const localRules = loadRulesFromFile(localConfigPath, true);
