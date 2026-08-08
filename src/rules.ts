@@ -14,7 +14,7 @@ export function sortRules(rules: Rule[]): Rule[] {
   return [...rules].sort((a, b) => {
     const pa = a.priority ?? 0;
     const pb = b.priority ?? 0;
-    if (pb !== pa) return pa - pb;
+    if (pb !== pa) return pb - pa;
     return ACTION_ORDER[b.action] - ACTION_ORDER[a.action];
   });
 }
@@ -35,6 +35,7 @@ export function matchesRule(rule: Rule, toolName: string, input: Record<string, 
       }
       const value = String(input[key]);
       if (!testPattern(pattern, value, debug, rule.priority ?? 0)) {
+        if (debug) log("DEBUG", `Param mismatch key: ${key}, value: ${value}, pattern: ${pattern}`)
         return { matched: false, reason: `Param mismatch: ${key}="${value}" does not match "${pattern}"` };
       }
     }
