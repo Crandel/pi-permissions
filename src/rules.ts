@@ -4,6 +4,12 @@ import { minimatch } from "minimatch";
 import { Action, Rule } from "./config";
 import { log } from "./logger";
 
+export const ACTION_ORDER: Record<Action, number> = {
+  deny: 2,
+  ask: 1,
+  allow: 0,
+};
+
 export function sortRules(rules: Rule[]): Rule[] {
   return [...rules].sort((a, b) => {
     const pa = a.priority ?? 0;

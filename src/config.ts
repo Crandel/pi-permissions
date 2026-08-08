@@ -9,9 +9,9 @@ export type Action = "allow" | "deny" | "ask";
 
 export interface MatchCriteria {
   tool: string;
-  params?: Record<string, string>;
-  paths?: string[];
-  pathParam?: string;
+  params?: Record<string, string>; // key: param name, value: regex pattern
+  paths?: string[];                 // glob or directory prefix patterns to match against pathParam
+  pathParam?: string;               // which input key holds the path, defaults to "path"
 }
 
 export interface Rule {
