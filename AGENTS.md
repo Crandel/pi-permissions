@@ -19,13 +19,13 @@ A [pi coding agent](https://github.com/earendil-works/pi) extension that interce
 pi-permissions/
 ├── src/
 │   ├── index.ts          # Extension entry — registers session_start & tool_call handlers
-│   ├── config.ts         # Config loading: pi-lab paths + settings.json fallback
+│   ├── config.ts         # Config loading: permissions paths + settings.json fallback
 │   ├── rules.ts          # Rule sorting, matching (tool/params/paths), evaluation
 │   ├── ask.ts            # SessionCache (SHA-256 keyed) + askUser dialog logic
 │   ├── events.ts         # Event emission + serializeRule (privacy-safe serialization)
 │   ├── format.ts         # buildTitle — formats tool calls for the ask dialog UI
 │   ├── settings.ts       # Reads & deep-merges pi user/project settings.json
-│   ├── paths.ts          # pi-lab global/local directory resolution
+│   ├── paths.ts          # permissions global/local directory resolution
 │   └── *.test.ts         # Unit tests (index, config, events)
 ├── dist/                 # Build output (gitignored)
 ├── openspec/             # OpenSpec workflow config & artifacts
@@ -49,8 +49,8 @@ pi agent startup
 session_start event
     │
     ├── loadConfig(cwd)
-    │     ├── global: ~/.pi/agent/pi-lab/permissions.json  (or ~/.pi/agent/settings.json)
-    │     └── local:  .pi/pi-lab/permissions.json          (or .pi/settings.json)
+    │     ├── global: ~/.pi/agent/permissions/permissions.json  (or ~/.pi/agent/settings.json)
+    │     └── local:  .pi/permissions/permissions.json          (or .pi/settings.json)
     │
     ├── sortRules(rules)       # priority desc, then deny > ask > allow
     └── cache.clear()          # session-scoped cache reset
@@ -78,16 +78,16 @@ tool_call event (per call)
 
 ### Config Loading Strategy
 
-Per-scope (global + local), pi-lab `permissions.json` takes priority over `settings.json` `permissions.rules`. The two scopes are concatenated (global first, then local), not deep-merged.
+Per-scope (global + local), permissions `permissions.json` takes priority over `settings.json` `permissions.rules`. The two scopes are concatenated (global first, then local), not deep-merged.
 
 ```
 loadConfig(cwd)
 ├── globalRules = loadRulesWithLegacyPriority(
-│     global pi-lab permissions.json,  ← preferred
+│     global permissions permissions.json,  ← preferred
 │     () => readPiUserSettings(home)   ← fallback
 │   )
 ├── localRules = loadRulesWithLegacyPriority(
-│     local pi-lab permissions.json,   ← preferred
+│     local permissions permissions.json,   ← preferred
 │     () => readPiProjectSettings(cwd) ← fallback
 │   )
 └── return { rules: [...globalRules, ...localRules] }

@@ -6,22 +6,22 @@ import test from "node:test";
 
 import { loadConfig } from "./config.js";
 
-test("loadConfig reads global and local permissions from pi-lab paths", () => {
+test("loadConfig reads global and local permissions from permissions paths", () => {
 	const home = mkdtempSync(join(tmpdir(), "pi-permissions-home-"));
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-cwd-"));
 
-	mkdirSync(join(home, ".pi", "agent", "pi-lab"), { recursive: true });
-	mkdirSync(join(cwd, ".pi", "pi-lab"), { recursive: true });
+	mkdirSync(join(home, ".pi", "agent", "permissions"), { recursive: true });
+	mkdirSync(join(cwd, ".pi", "permissions"), { recursive: true });
 
 	writeFileSync(
-		join(home, ".pi", "agent", "pi-lab", "permissions.json"),
+		join(home, ".pi", "agent", "permissions", "permissions.json"),
 		JSON.stringify({
 			rules: [{ match: { tool: "bash" }, action: "allow", priority: 1 }],
 		}),
 		"utf8",
 	);
 	writeFileSync(
-		join(cwd, ".pi", "pi-lab", "permissions.json"),
+		join(cwd, ".pi", "permissions", "permissions.json"),
 		JSON.stringify({
 			rules: [{ match: { tool: "read" }, action: "deny", priority: 2 }],
 		}),
@@ -36,7 +36,7 @@ test("loadConfig reads global and local permissions from pi-lab paths", () => {
 	]);
 });
 
-test("loadConfig falls back to settings permissions when pi-lab files are missing", () => {
+test("loadConfig falls back to settings permissions when permissions files are missing", () => {
 	const home = mkdtempSync(join(tmpdir(), "pi-permissions-home-"));
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-cwd-"));
 
@@ -70,12 +70,12 @@ test("loadConfig falls back to settings permissions when pi-lab files are missin
 	]);
 });
 
-test("loadConfig prefers pi-lab permissions over settings permissions per scope", () => {
+test("loadConfig prefers permissions permissions over settings permissions per scope", () => {
 	const home = mkdtempSync(join(tmpdir(), "pi-permissions-home-"));
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-cwd-"));
 
-	mkdirSync(join(home, ".pi", "agent", "pi-lab"), { recursive: true });
-	mkdirSync(join(cwd, ".pi", "pi-lab"), { recursive: true });
+	mkdirSync(join(home, ".pi", "agent", "permissions"), { recursive: true });
+	mkdirSync(join(cwd, ".pi", "permissions"), { recursive: true });
 
 	writeFileSync(
 		join(home, ".pi", "agent", "settings.json"),
@@ -88,12 +88,12 @@ test("loadConfig prefers pi-lab permissions over settings permissions per scope"
 		"utf8",
 	);
 	writeFileSync(
-		join(home, ".pi", "agent", "pi-lab", "permissions.json"),
+		join(home, ".pi", "agent", "permissions", "permissions.json"),
 		JSON.stringify({ rules: [{ match: { tool: "global-legacy" }, action: "allow" }] }),
 		"utf8",
 	);
 	writeFileSync(
-		join(cwd, ".pi", "pi-lab", "permissions.json"),
+		join(cwd, ".pi", "permissions", "permissions.json"),
 		JSON.stringify({ rules: [{ match: { tool: "local-legacy" }, action: "ask" }] }),
 		"utf8",
 	);
@@ -110,11 +110,11 @@ test("loadConfig falls back to settings independently for each scope", () => {
 	const home = mkdtempSync(join(tmpdir(), "pi-permissions-home-"));
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-cwd-"));
 
-	mkdirSync(join(home, ".pi", "agent", "pi-lab"), { recursive: true });
+	mkdirSync(join(home, ".pi", "agent", "permissions"), { recursive: true });
 	mkdirSync(join(cwd, ".pi"), { recursive: true });
 
 	writeFileSync(
-		join(home, ".pi", "agent", "pi-lab", "permissions.json"),
+		join(home, ".pi", "agent", "permissions", "permissions.json"),
 		JSON.stringify({ rules: [{ match: { tool: "global-legacy" }, action: "allow" }] }),
 		"utf8",
 	);
