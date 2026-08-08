@@ -79,22 +79,34 @@ test("loadConfig prefers permissions permissions over settings permissions per s
 
 	writeFileSync(
 		join(home, ".pi", "agent", "settings.json"),
-		JSON.stringify({ permissions: { rules: [{ match: { tool: "global-settings" }, action: "deny" }] } }),
+		JSON.stringify({
+			permissions: {
+				rules: [{ match: { tool: "global-settings" }, action: "deny" }],
+			},
+		}),
 		"utf8",
 	);
 	writeFileSync(
 		join(cwd, ".pi", "settings.json"),
-		JSON.stringify({ permissions: { rules: [{ match: { tool: "local-settings" }, action: "deny" }] } }),
+		JSON.stringify({
+			permissions: {
+				rules: [{ match: { tool: "local-settings" }, action: "deny" }],
+			},
+		}),
 		"utf8",
 	);
 	writeFileSync(
 		join(home, ".pi", "agent", "permissions", "permissions.json"),
-		JSON.stringify({ rules: [{ match: { tool: "global-legacy" }, action: "allow" }] }),
+		JSON.stringify({
+			rules: [{ match: { tool: "global-legacy" }, action: "allow" }],
+		}),
 		"utf8",
 	);
 	writeFileSync(
 		join(cwd, ".pi", "permissions", "permissions.json"),
-		JSON.stringify({ rules: [{ match: { tool: "local-legacy" }, action: "ask" }] }),
+		JSON.stringify({
+			rules: [{ match: { tool: "local-legacy" }, action: "ask" }],
+		}),
 		"utf8",
 	);
 
@@ -115,12 +127,18 @@ test("loadConfig falls back to settings independently for each scope", () => {
 
 	writeFileSync(
 		join(home, ".pi", "agent", "permissions", "permissions.json"),
-		JSON.stringify({ rules: [{ match: { tool: "global-legacy" }, action: "allow" }] }),
+		JSON.stringify({
+			rules: [{ match: { tool: "global-legacy" }, action: "allow" }],
+		}),
 		"utf8",
 	);
 	writeFileSync(
 		join(cwd, ".pi", "settings.json"),
-		JSON.stringify({ permissions: { rules: [{ match: { tool: "local-settings" }, action: "deny" }] } }),
+		JSON.stringify({
+			permissions: {
+				rules: [{ match: { tool: "local-settings" }, action: "deny" }],
+			},
+		}),
 		"utf8",
 	);
 

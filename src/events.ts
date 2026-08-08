@@ -17,8 +17,17 @@ export type SerializedPermissionRule = {
 };
 
 export type PermissionsDenySource = "rule" | "cache" | "user" | "no_ui";
-export type PermissionSelection = "Allow" | "Allow always" | "Deny" | "Deny always";
-export const PERMISSION_OPTIONS: PermissionSelection[] = ["Allow", "Allow always", "Deny", "Deny always"];
+export type PermissionSelection =
+	| "Allow"
+	| "Allow always"
+	| "Deny"
+	| "Deny always";
+export const PERMISSION_OPTIONS: PermissionSelection[] = [
+	"Allow",
+	"Allow always",
+	"Deny",
+	"Deny always",
+];
 
 export type PermissionsDenyEvent = {
 	toolCallId: string;
@@ -55,14 +64,24 @@ export function serializeRule(rule: Rule): SerializedPermissionRule {
 		...(rule.priority === undefined ? {} : { priority: rule.priority }),
 		match: {
 			tool: rule.match.tool,
-			...(rule.match.params === undefined ? {} : { params: { ...rule.match.params } }),
-			...(rule.match.paths === undefined ? {} : { paths: [...rule.match.paths] }),
-			...(rule.match.pathParam === undefined ? {} : { pathParam: rule.match.pathParam }),
+			...(rule.match.params === undefined
+				? {}
+				: { params: { ...rule.match.params } }),
+			...(rule.match.paths === undefined
+				? {}
+				: { paths: [...rule.match.paths] }),
+			...(rule.match.pathParam === undefined
+				? {}
+				: { pathParam: rule.match.pathParam }),
 		},
 	};
 }
 
-export function emitPermissionEvent(bus: EventBus, name: string, payload: unknown): void {
+export function emitPermissionEvent(
+	bus: EventBus,
+	name: string,
+	payload: unknown,
+): void {
 	try {
 		bus.emit(name, payload);
 	} catch {

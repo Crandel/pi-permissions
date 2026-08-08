@@ -11,11 +11,18 @@ export class SessionCache {
 		return createHash("sha256").update(raw).digest("hex");
 	}
 
-	get(toolName: string, input: Record<string, unknown>): "allow" | "deny" | undefined {
+	get(
+		toolName: string,
+		input: Record<string, unknown>,
+	): "allow" | "deny" | undefined {
 		return this.cache.get(this.callKey(toolName, input));
 	}
 
-	set(toolName: string, input: Record<string, unknown>, decision: "allow" | "deny"): void {
+	set(
+		toolName: string,
+		input: Record<string, unknown>,
+		decision: "allow" | "deny",
+	): void {
 		this.cache.set(this.callKey(toolName, input), decision);
 	}
 
@@ -34,11 +41,14 @@ export async function askUser(
 	toolName: string,
 	input: Record<string, unknown>,
 	cache: SessionCache,
-	ctx: ExtensionContext
+	ctx: ExtensionContext,
 ): Promise<AskUserResult> {
 	const title = buildTitle(toolName, input);
 
-	const result = (await ctx.ui.select(title, PERMISSION_OPTIONS)) as PermissionSelection | null;
+	const result = (await ctx.ui.select(
+		title,
+		PERMISSION_OPTIONS,
+	)) as PermissionSelection | null;
 
 	if (result === "Allow always") {
 		cache.set(toolName, input, "allow");
@@ -50,6 +60,10 @@ export async function askUser(
 		return { selection: result, decision: "allow", cached: false };
 	} else {
 		// "Deny" or null (user closed)
-		return { selection: result === "Deny" ? result : null, decision: "deny", cached: false };
+		return {
+			selection: result === "Deny" ? result : null,
+			decision: "deny",
+			cached: false,
+		};
 	}
 }

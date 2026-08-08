@@ -19,6 +19,9 @@ test("serializeRule preserves only configured safe rule fields", () => {
 	const serialized = serializeRule(rule);
 
 	assert.deepEqual(serialized, rule);
-	assert.equal(JSON.stringify(serialized).includes("/tmp/actual-secret"), false);
+	assert.equal(
+		JSON.stringify(serialized).includes("/tmp/actual-secret"),
+		false,
+	);
 	assert.equal(Object.hasOwn(serialized, "input"), false);
 });

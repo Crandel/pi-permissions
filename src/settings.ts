@@ -29,11 +29,16 @@ export interface ReadMergedPiSettingsOptions {
 	home?: string;
 }
 
-export function mergePiSettings(userSettings: PiSettings = {}, projectSettings: PiSettings = {}): PiSettings {
+export function mergePiSettings(
+	userSettings: PiSettings = {},
+	projectSettings: PiSettings = {},
+): PiSettings {
 	return deepMerge(userSettings, projectSettings);
 }
 
-export function readMergedPiSettings(options: ReadMergedPiSettingsOptions = {}): PiSettings {
+export function readMergedPiSettings(
+	options: ReadMergedPiSettingsOptions = {},
+): PiSettings {
 	return mergePiSettings(
 		readPiUserSettings(options.home),
 		readPiProjectSettings(options.cwd),
