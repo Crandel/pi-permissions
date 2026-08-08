@@ -36,6 +36,7 @@ function loadRulesFromFile(filePath: string, debug: boolean = false): Rule[] {
     if (Array.isArray(parsed.rules)) {
       if (debug) {
         log("DEBUG", `Loaded ${parsed.rules.length} rules from ${filePath}`);
+        log("DEBUG", `Rules: ${JSON.stringify(parsed.rules, null, 2)}`)
       }
       return parsed.rules;
     }
@@ -53,6 +54,7 @@ function loadRulesFromSettings(readSettings: () => PiSettings | null, debug: boo
     if (settings && settings.permissions && Array.isArray(settings.permissions.rules)) {
       if (debug) {
         log("DEBUG", `Loaded ${settings.permissions.rules.length} rules from settings in ${filePath}`);
+        log("DEBUG", `Rules: ${JSON.stringify(settings.permissions.rules, null, 2)}`)
       }
       return settings.permissions.rules;
     }
