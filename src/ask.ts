@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { buildTitle } from "./format";
-import { PERMISSION_OPTIONS, type PermissionSelection } from "./events";
+import { getPermissionOptions, type PermissionSelection } from "./events";
 
 export class SessionCache {
-	private cache: Map<string, "allow" | "deny"> = new Map();
+	private allowAll: boolean = false;
+	private toolCache: Map<string, "allow" | "deny"> = new Map();
+	private exactCache: Map<string, "allow" | "deny"> = new Map();
 
 	private callKey(toolName: string, input: Record<string, unknown>): string {
 		const raw = JSON.stringify({ tool: toolName, input });
@@ -15,19 +17,32 @@ export class SessionCache {
 		toolName: string,
 		input: Record<string, unknown>,
 	): "allow" | "deny" | undefined {
-		return this.cache.get(this.callKey(toolName, input));
+		if (this.allowAll) return "allow";
+		const toolDecision = this.toolCache.get(toolName);
+		if (toolDecision !== undefined) return toolDecision;
+		return this.exactCache.get(this.callKey(toolName, input));
 	}
 
-	set(
+	setTool(toolName: string, decision: "allow" | "deny"): void {
+		this.toolCache.set(toolName, decision);
+	}
+
+	setExact(
 		toolName: string,
 		input: Record<string, unknown>,
 		decision: "allow" | "deny",
 	): void {
-		this.cache.set(this.callKey(toolName, input), decision);
+		this.exactCache.set(this.callKey(toolName, input), decision);
+	}
+
+	setAllowAll(): void {
+		this.allowAll = true;
 	}
 
 	clear(): void {
-		this.cache.clear();
+		this.allowAll = false;
+		this.toolCache.clear();
+		this.exactCache.clear();
 	}
 }
 
@@ -45,25 +60,34 @@ export async function askUser(
 ): Promise<AskUserResult> {
 	const title = buildTitle(toolName, input);
 
+	const options = getPermissionOptions(toolName);
+
 	const result = (await ctx.ui.select(
 		title,
-		PERMISSION_OPTIONS,
+		options,
 	)) as PermissionSelection | null;
 
-	if (result === "Allow always") {
-		cache.set(toolName, input, "allow");
-		return { selection: result, decision: "allow", cached: true };
-	} else if (result === "Deny always") {
-		cache.set(toolName, input, "deny");
-		return { selection: result, decision: "deny", cached: true };
-	} else if (result === "Allow") {
+	if (result === "Allow") {
 		return { selection: result, decision: "allow", cached: false };
+	} else if (result === "Session allow (exact input)") {
+		cache.setExact(toolName, input, "allow");
+		return { selection: result, decision: "allow", cached: true };
+	} else if (result === `Session allow (tool: ${toolName} *)`) {
+		cache.setTool(toolName, "allow");
+		return { selection: result, decision: "allow", cached: true };
+	} else if (result === "Allow everything (this session)") {
+		cache.setAllowAll();
+		return { selection: result, decision: "allow", cached: true };
+	} else if (result === "Deny") {
+		return { selection: result, decision: "deny", cached: false };
+	} else if (result === "Session deny (exact input)") {
+		cache.setExact(toolName, input, "deny");
+		return { selection: result, decision: "deny", cached: true };
+	} else if (result === `Session deny (tool: ${toolName} *)`) {
+		cache.setTool(toolName, "deny");
+		return { selection: result, decision: "deny", cached: true };
 	} else {
-		// "Deny" or null (user closed)
-		return {
-			selection: result === "Deny" ? result : null,
-			decision: "deny",
-			cached: false,
-		};
+		// null (user closed)
+		return { selection: null, decision: "deny", cached: false };
 	}
 }

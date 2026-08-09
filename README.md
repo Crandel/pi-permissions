@@ -69,16 +69,31 @@ No match defaults to `allow`.
 
 ### ask mode
 
-A dialog prompts the user with four options:
+A dialog prompts the user with seven options:
 
-- **Allow** — allow this call once
-- **Allow always** — allow identical calls for the rest of the session (not persisted).
-- **Deny** — deny this call once
-- **Deny always** — deny identical calls for the rest of the session (not persisted)
+- **Allow** — allow this call once (not cached)
+- **Session allow (exact input)** — allow identical calls (same tool + input) for the rest of the session
+- **Session allow (tool: `<toolName>` \*)** — allow all calls to this tool for the rest of the session
+- **Allow everything (this session)** — bypass all permission prompts for all tools for the rest of the session
+- **Deny** — deny this call once (not cached)
+- **Session deny (exact input)** — deny identical calls (same tool + input) for the rest of the session
+- **Session deny (tool: `<toolName>` \*)** — deny all calls to this tool for the rest of the session
 
-For Allow/Deny always options:
-  The decision is stored in an in-memory cache keyed by a SHA-256 hash of the tool name and input.
-  The cache is cleared on every `session_start`, so decisions do not survive across sessions.
+### Session cache
+
+Session decisions are stored in an in-memory `SessionCache` with three levels:
+
+- `allowAll` — global session bypass flag (set by "Allow everything (this session)")
+- `toolCache` — `Map<string, "allow" | "deny">` keyed by tool name (set by tool-wide options)
+- `exactCache` — `Map<string, "allow" | "deny">` keyed by SHA-256 hash of `{ tool, input }` (set by exact-input options)
+
+Cache lookup order in `SessionCache.get(toolName, input)`:
+
+1. If `allowAll` is set → return `"allow"`
+2. Check `toolCache` for `toolName`
+3. Check `exactCache` for the SHA-256 hash of `{ tool: toolName, input }`
+
+The cache is cleared on every `session_start`, so decisions do not survive across sessions. No decisions are persisted to disk.
 
 ## Events
 
@@ -94,7 +109,18 @@ The extension broadcasts observational events on `pi.events`. Listeners cannot c
 
 All payloads include the matched rule serialized with configured patterns only. Raw tool input is never broadcast.
 
+The `permissions:ask` event includes an `options` array of `PermissionSelection` values, dynamically generated per tool via `getPermissionOptions(toolName)`.
+
 ```ts
+type PermissionSelection =
+ | "Allow"
+ | "Session allow (exact input)"
+ | `Session allow (tool: ${string} *)`
+ | "Allow everything (this session)"
+ | "Deny"
+ | "Session deny (exact input)"
+ | `Session deny (tool: ${string} *)`;
+
 type SerializedPermissionRule = {
   action: "allow" | "deny" | "ask";
   message?: string;
@@ -119,13 +145,13 @@ type PermissionsAskEvent = {
   toolCallId: string;
   toolName: string;
   rule: SerializedPermissionRule;
-  options: ["Allow", "Allow always", "Deny", "Deny always"];
+  options: PermissionSelection[];
 };
 
 type PermissionsUserSelectEvent = {
   toolCallId: string;
   toolName: string;
-  selection: "Allow" | "Allow always" | "Deny" | "Deny always" | null;
+  selection: PermissionSelection | null;
   decision: "allow" | "deny";
   cached: boolean;
   rule: SerializedPermissionRule;

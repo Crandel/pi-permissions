@@ -135,9 +135,12 @@ test("real ask emits ask before user_select and allow selection does not deny", 
 	);
 	assert.deepEqual(app.emitted[0].payload.options, [
 		"Allow",
-		"Allow always",
+		"Session allow (exact input)",
+		"Session allow (tool: bash *)",
+		"Allow everything (this session)",
 		"Deny",
-		"Deny always",
+		"Session deny (exact input)",
+		"Session deny (tool: bash *)",
 	]);
 	assert.equal(app.emitted[1].payload.selection, "Allow");
 	assert.equal(app.emitted[1].payload.decision, "allow");
@@ -161,7 +164,10 @@ test("user deny emits user_select then permissions:deny with source user", async
 });
 
 test("ask cache deny emits permissions:deny with source cache without prompting", async () => {
-	const app = setup([askRule], { hasUI: true, selections: ["Deny always"] });
+	const app = setup([askRule], {
+		hasUI: true,
+		selections: ["Session deny (exact input)"],
+	});
 	await app.start();
 
 	await app.toolCall({ command: "sudo whoami" }, "first");
@@ -175,4 +181,92 @@ test("ask cache deny emits permissions:deny with source cache without prompting"
 	);
 	assert.equal(app.emitted[0].payload.source, "cache");
 	assert.equal(app.emitted[0].payload.toolCallId, "second");
+});
+
+test("session allow (tool: bash *) caches for any input without prompting", async () => {
+	const app = setup([askRule], {
+		hasUI: true,
+		selections: ["Session allow (tool: bash *)"],
+	});
+	await app.start();
+
+	// First call: user selects tool-wide session allow
+	const result1 = await app.toolCall({ command: "sudo ls" }, "first");
+	assert.equal(result1, undefined);
+	assert.equal(
+		app.emitted[1].payload.selection,
+		"Session allow (tool: bash *)",
+	);
+	assert.equal(app.emitted[1].payload.decision, "allow");
+	assert.equal(app.emitted[1].payload.cached, true);
+
+	// Second call: different input → cached tool-wide allow, no prompt
+	app.emitted.length = 0;
+	const result2 = await app.toolCall({ command: "sudo pwd" }, "second");
+	assert.equal(result2, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		[],
+	);
+});
+
+test("session allow (exact input) caches for same input, prompts for different", async () => {
+	const app = setup([askRule], {
+		hasUI: true,
+		selections: ["Session allow (exact input)", "Allow"],
+	});
+	await app.start();
+
+	// First call: user selects exact-input session allow
+	const result1 = await app.toolCall({ command: "sudo ls" }, "first");
+	assert.equal(result1, undefined);
+	assert.equal(app.emitted[1].payload.selection, "Session allow (exact input)");
+	assert.equal(app.emitted[1].payload.decision, "allow");
+	assert.equal(app.emitted[1].payload.cached, true);
+
+	// Second call: same input → cached exact-input allow, no prompt
+	app.emitted.length = 0;
+	const result2 = await app.toolCall({ command: "sudo ls" }, "second");
+	assert.equal(result2, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		[],
+	);
+
+	// Third call: different input → prompts again
+	const result3 = await app.toolCall({ command: "sudo pwd" }, "third");
+	assert.equal(result3, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		["permissions:ask", "permissions:user_select"],
+	);
+	assert.equal(app.emitted[1].payload.selection, "Allow");
+	assert.equal(app.emitted[1].payload.cached, false);
+});
+
+test("allow everything (this session) bypasses all prompts", async () => {
+	const app = setup([askRule], {
+		hasUI: true,
+		selections: ["Allow everything (this session)"],
+	});
+	await app.start();
+
+	// First call: user selects global session allow
+	const result1 = await app.toolCall({ command: "sudo ls" }, "first");
+	assert.equal(result1, undefined);
+	assert.equal(
+		app.emitted[1].payload.selection,
+		"Allow everything (this session)",
+	);
+	assert.equal(app.emitted[1].payload.decision, "allow");
+	assert.equal(app.emitted[1].payload.cached, true);
+
+	// Second call: different input → cached global allow, no prompt
+	app.emitted.length = 0;
+	const result2 = await app.toolCall({ command: "sudo pwd" }, "second");
+	assert.equal(result2, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		[],
+	);
 });

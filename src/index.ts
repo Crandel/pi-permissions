@@ -4,7 +4,7 @@ import { loadConfig, type PermissionConfig, type Rule } from "./config";
 import { sortRules, evaluate } from "./rules";
 import { SessionCache, askUser } from "./ask";
 import {
-	PERMISSION_OPTIONS,
+	getPermissionOptions,
 	PERMISSIONS_ASK_EVENT,
 	PERMISSIONS_DENY_EVENT,
 	PERMISSIONS_USER_SELECT_EVENT,
@@ -115,7 +115,7 @@ export default function (pi: ExtensionAPI) {
 			toolCallId: event.toolCallId,
 			toolName: event.toolName,
 			rule: serializeRule(rule),
-			options: PERMISSION_OPTIONS,
+			options: getPermissionOptions(event.toolName),
 		});
 
 		const userResult = await askUser(event.toolName, event.input, cache, ctx);

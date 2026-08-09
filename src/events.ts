@@ -19,15 +19,24 @@ export type SerializedPermissionRule = {
 export type PermissionsDenySource = "rule" | "cache" | "user" | "no_ui";
 export type PermissionSelection =
 	| "Allow"
-	| "Allow always"
+	| "Session allow (exact input)"
+	| `Session allow (tool: ${string} *)`
+	| "Allow everything (this session)"
 	| "Deny"
-	| "Deny always";
-export const PERMISSION_OPTIONS: PermissionSelection[] = [
-	"Allow",
-	"Allow always",
-	"Deny",
-	"Deny always",
-];
+	| "Session deny (exact input)"
+	| `Session deny (tool: ${string} *)`;
+
+export function getPermissionOptions(toolName: string): PermissionSelection[] {
+	return [
+		"Allow",
+		"Session allow (exact input)",
+		`Session allow (tool: ${toolName} *)`,
+		"Allow everything (this session)",
+		"Deny",
+		"Session deny (exact input)",
+		`Session deny (tool: ${toolName} *)`,
+	];
+}
 
 export type PermissionsDenyEvent = {
 	toolCallId: string;
