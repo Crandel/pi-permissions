@@ -34,7 +34,8 @@
 		"@earendil-works/pi-coding-agent": "^0.80.6",
 		"@sinclair/typebox": "^0.34.49",
 		"tsdown": "^0.22.3",
-		"tsx": "^4.22.4"
+		"tsx": "^4.22.4",
+		"typescript": "^7.0.2"
 	},
 	"peerDependencies": {
 		"@earendil-works/pi-coding-agent": "^0.80.6",

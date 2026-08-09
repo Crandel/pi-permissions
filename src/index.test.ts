@@ -13,7 +13,9 @@ function setup(
 	options: { hasUI?: boolean; selections?: (string | null)[] } = {},
 ) {
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-events-cwd-"));
+	const home = mkdtempSync(join(tmpdir(), "pi-permissions-events-home-"));
 	mkdirSync(join(cwd, ".pi"), { recursive: true });
+	mkdirSync(join(home, ".pi", "agent", "permissions"), { recursive: true });
 	writeFileSync(
 		join(cwd, ".pi", "settings.json"),
 		JSON.stringify({ permissions: { rules } }),
@@ -37,6 +39,7 @@ function setup(
 
 	const ctx = {
 		cwd,
+		home,
 		hasUI: options.hasUI ?? false,
 		ui: {
 			async select(_title: string, _options: string[]) {

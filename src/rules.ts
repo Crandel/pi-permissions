@@ -137,6 +137,7 @@ function testPattern(
 				"ERROR",
 				`Rule ${priority}: Failed to create regex "${pattern}": ${e.message}`,
 			);
+		return false;
 	}
 
 	const isMatch = value.includes(pattern);

@@ -72,9 +72,13 @@ No match defaults to `allow`.
 A dialog prompts the user with four options:
 
 - **Allow** — allow this call once
-- **Allow always** — allow identical calls for the rest of the session (not persisted)
+- **Allow always** — allow identical calls for the rest of the session (not persisted).
 - **Deny** — deny this call once
 - **Deny always** — deny identical calls for the rest of the session (not persisted)
+
+For Allow/Deny always options:
+  The decision is stored in an in-memory cache keyed by a SHA-256 hash of the tool name and input.
+  The cache is cleared on every `session_start`, so decisions do not survive across sessions.
 
 ## Events
 

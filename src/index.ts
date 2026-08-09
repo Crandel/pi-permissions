@@ -1,5 +1,6 @@
+import * as os from "node:os";
 import { log } from "./logger";
-import { loadConfig, type PermissionConfig } from "./config";
+import { loadConfig, type PermissionConfig, type Rule } from "./config";
 import { sortRules, evaluate } from "./rules";
 import { SessionCache, askUser } from "./ask";
 import {
@@ -19,8 +20,11 @@ export default function (pi: ExtensionAPI) {
 	let debug = false;
 	const cache = new SessionCache();
 
-	pi.on("session_start", async (event, ctx) => {
-		config = loadConfig(ctx.cwd, ctx.home);
+	pi.on("session_start", async (_event, ctx) => {
+		config = loadConfig(
+			ctx.cwd,
+			(ctx as { home?: string }).home ?? os.homedir(),
+		);
 		sortedRules = sortRules(config.rules);
 		debug = config.debug ?? false;
 		cache.clear();
@@ -136,7 +140,7 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		const reason = rule.message ?? "Blocked by user";
-		if (debug) log("DENY", `User denied: ${reason}`);
+		if (debug) log("ERROR", `User denied: ${reason}`);
 		emitDeny(pi.events, event.toolCallId, event.toolName, reason, "user", rule);
 		return { block: true, reason };
 	});
@@ -150,7 +154,7 @@ export default function (pi: ExtensionAPI) {
 		rule: Rule,
 	) {
 		if (debug) {
-			log("DENY", `Tool "${toolName}" blocked: ${reason} (source: ${source})`);
+			log("ERROR", `Tool "${toolName}" blocked: ${reason} (source: ${source})`);
 		}
 		emitPermissionEvent(events, PERMISSIONS_DENY_EVENT, {
 			toolCallId,

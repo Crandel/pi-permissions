@@ -3,7 +3,11 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { log } from "./logger";
 import { getPermissionGlobalDir, getPermissionLocalDir } from "./paths";
-import { readPiUserSettings, readPiProjectSettings } from "./settings";
+import {
+	readPiUserSettings,
+	readPiProjectSettings,
+	type PiSettings,
+} from "./settings";
 
 export type Action = "allow" | "deny" | "ask";
 
@@ -55,22 +59,18 @@ function loadRulesFromSettings(
 ): Rule[] {
 	try {
 		const settings = readSettings();
-		if (
-			settings &&
-			settings.permissions &&
-			Array.isArray(settings.permissions.rules)
-		) {
+		const permissions = settings?.permissions as
+			| { rules?: unknown }
+			| undefined;
+		if (permissions && Array.isArray(permissions.rules)) {
 			if (debug) {
 				log(
 					"DEBUG",
-					`Loaded ${settings.permissions.rules.length} rules from settings in ${filePath}`,
+					`Loaded ${permissions.rules.length} rules from settings in ${filePath}`,
 				);
-				log(
-					"DEBUG",
-					`Rules: ${JSON.stringify(settings.permissions.rules, null, 2)}`,
-				);
+				log("DEBUG", `Rules: ${JSON.stringify(permissions.rules, null, 2)}`);
 			}
-			return settings.permissions.rules;
+			return permissions.rules;
 		}
 	} catch (e: any) {
 		if (debug) {
