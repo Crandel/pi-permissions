@@ -28,11 +28,6 @@ export function matchesRule(
 	const match = rule.match;
 
 	if (match.tool !== "*" && match.tool !== toolName) {
-		if (debug)
-			log(
-				"DEBUG",
-				`Rule ${rule.priority ?? 0}: Tool mismatch (${match.tool} != ${toolName})`,
-			);
 		return {
 			matched: false,
 			reason: `Tool mismatch: expected "${match.tool}", got "${toolName}"`,
@@ -43,7 +38,10 @@ export function matchesRule(
 		for (const [key, pattern] of Object.entries(match.params)) {
 			if (!(key in input)) {
 				if (debug)
-					log("DEBUG", `Rule ${rule.priority}: Missing param "${key}"`);
+					log(
+						"DEBUG",
+						`Rule ${rule.priority}: Missing param "${key}. Input: ${input}"`,
+					);
 				return { matched: false, reason: `Missing param: ${key}` };
 			}
 			const value = String(input[key]);
@@ -64,8 +62,6 @@ export function matchesRule(
 	if (match.paths && match.paths.length > 0) {
 		const pathKey = match.pathParam ?? "path";
 		if (!(pathKey in input)) {
-			if (debug)
-				log("DEBUG", `Rule ${rule.priority}: Missing path param "${pathKey}"`);
 			return { matched: false, reason: `Missing path param: ${pathKey}` };
 		}
 		const rawValue = String(input[pathKey]);
@@ -186,6 +182,7 @@ export function evaluate(
 	debug: boolean,
 ): { action: Action; rule: Rule; matchTrace?: string[] } | null {
 	const matchTrace: string[] = [];
+	log("DEBUG", `Tool: ${toolName}. Action:`);
 	for (const rule of sortedRules) {
 		const result = matchesRule(rule, toolName, input, debug);
 		if (result.matched) {

@@ -1,217 +1,200 @@
-# Available Tools
+### bash
 
-This document lists all tools available to the coding agent, along with their parameters and descriptions.
+Execute bash commands in a given `cwd` (ls, grep, find, etc.).
 
----
+- **Parameters:**
+  - `command` (string, required): Bash command to execute. Do NOT prefix it with `cd <dir> &&` — use the `cwd` parameter instead.
+  - `cwd` (string, optional): Working directory for the command. Defaults to the current project directory.
+  - `timeout` (number, optional): Timeout in seconds (optional, no default timeout).
 
-## read
+### edit
 
-Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files.
+Edit a single file using exact text replacement.
 
-|Parameter|Type  |Required|Description                                    |
-|---------|------|--------|-----------------------------------------------|
-|`path`   |string|Yes     |Path to the file to read (relative or absolute)|
-|`offset` |number|No      |Line number to start reading from (1-indexed)  |
-|`limit`  |number|No      |Maximum number of lines to read                |
+- **Parameters:**
+  - `path` (string, required): Path to the file to edit (relative or absolute).
+  - `edits` (array of objects, required): One or more targeted replacements. Each edit must specify `oldText` (exact text for one targeted replacement) and `newText` (replacement text).
 
----
+### lens_diagnostics
 
-## bash
+Query pi-lens's diagnostic state.
 
-Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file.
+- **Parameters:**
+  - `mode` (string, required): Mode of diagnostics (`delta`, `all`, or `full`).
+  - `paths` (array of strings, optional): Restrict diagnostics to specific file/directory lists.
+  - `refreshRunners` (string, optional): For `mode=full` only (`none`, `cached`, `cheap`, or `all`).
+  - `severity` (string, optional): Filter by severity (`error`, `warning`, `information`, `hint`, or `all`).
+  - `maxLspFiles` (number, optional): Cap the number of files routed through the language server (mode=full only).
+  - `maxProjectFiles` (number, optional): Cap project files scanned by the cheap project runners (mode=full only).
 
-|Parameter|Type  |Required|Description                                      |
-|---------|------|--------|-------------------------------------------------|
-|`command`|string|Yes     |Bash command to execute                          |
-|`timeout`|number|No      |Timeout in seconds (optional, no default timeout)|
+### lsp_diagnostics
 
----
+Get errors, warnings, and hints from language servers for a file or directory.
 
-## edit
+- **Parameters:**
+  - `path` (string, optional): File or directory path to check.
+  - `paths` (array of strings, optional): Explicit files to check as a bounded-concurrency batch.
+  - `serverScope` (string, optional): Scope of checks (`primary` or `all`).
+  - `severity` (string, optional): Filter by severity (`error`, `warning`, `information`, `hint`, or `all`).
+  - `concurrency` (number, optional): Batch/directory concurrency (default 8, max 16).
+  - `waitMs` (number, optional): Per-file wait budget for batch diagnostics.
 
-Edit a single file using exact text replacement. Every `edits[].oldText` must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes.
+### ast_grep_dump
 
-|Parameter        |Type  |Required|Description                                                                                                                                         |
-|-----------------|------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`           |string|Yes     |Path to the file to edit (relative or absolute)                                                                                                     |
-|`edits`          |array |Yes     |Array of edit objects, each containing:                                                                                                             |
-|`edits[].oldText`|string|Yes     |Exact text for one targeted replacement. Must be unique in the original file and must not overlap with any other `edits[].oldText` in the same call.|
-|`edits[].newText`|string|Yes     |Replacement text for this targeted edit                                                                                                             |
+Dump the tree-sitter AST for a source snippet to discover node kinds/field names.
 
----
+Structured, navigable overview of a source module.
 
-## write
+- **Parameters:**
+  - `path` (string, required): Absolute or workspace-relative path to the source file.
+  - `view` (string, optional): Payload tier (`summary`, `default`, or `compact`).
+  - `blastRadius` (boolean, optional): Include the cross-file blast-radius section.
+  - `blastRadiusDepth` (number, optional): Max hops for the blast-radius walk (default 3).
+  - `callGraph` (boolean, optional): Include bounded derived callers/callees from the cached FunctionCallGraph.
+  - `maxCallGraphEntries` (number, optional): Per-direction cap for call-graph relations (default 20).
+  - `maxRefsPerSymbol` (number, optional): Cap on who-uses-this entries per symbol (default 10).
 
-Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories.
+### pi_lens_activate_tools
 
-|Parameter|Type  |Required|Description                                     |
-|---------|------|--------|------------------------------------------------|
-|`path`   |string|Yes     |Path to the file to write (relative or absolute)|
-|`content`|string|Yes     |Content to write to the file                    |
+Activate one or more situational pi-lens tools that stay registered but inactive by default.
 
----
+- **Parameters:**
+  - `tools` (array of strings, required): Names of situational tools to activate (e.g., `ast_grep_search`).
 
-## ast_edit
+### pi-lens-lsp-navigation
 
-Structural code search-and-rewrite using ast-grep. Matches code by AST pattern (not text), so it survives formatting/whitespace differences and understands language syntax. Always previews a diff and asks for confirmation before writing, unless `autoApply` is set to true.
+Navigate code with IDE features and run proactive LSP diagnostics on files/folders/batches.
 
-|Parameter   |Type   |Required|Description                                                                                                                                                                                                                                        |
-|------------|-------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`      |string |Yes     |File or directory to search/rewrite. Directories are scanned recursively, respecting `.gitignore`.                                                                                                                                                 |
-|`lang`      |string |Yes     |Language grammar to use for parsing. One of: `go`, `kotlin`, `typescript`, `tsx`, `javascript`, `python`, `rust`, `java`, `c`, `cpp`                                                                                                               |
-|`pattern`   |string |Yes     |ast-grep pattern to match, e.g. `fmt.Sprintf($$$ARGS)` (Go) or `println($MSG)` (Kotlin). Use `$NAME` for a single-node capture, `$$$NAME` for a multi-node capture.                                                                                |
-|`rewrite`   |string |Yes     |Replacement pattern, referencing the same `$NAME` / `$$$NAME` captures used in `pattern`.                                                                                                                                                          |
-|`strictness`|string |No      |Matching strictness. `smart` (default-ish) ignores some trivial formatting differences; `ast` requires exact node-kind match; `relaxed` ignores comments too. Omit to use ast-grep's default. One of: `cst`, `smart`, `ast`, `relaxed`, `signature`|
-|`autoApply` |boolean|No      |If true, skip the confirmation prompt and apply immediately. Defaults to false — a diff preview and confirm dialog is shown first. Only set true if the user has already approved this exact change.                                               |
+- **Parameters:** (No parameters defined, used for general code navigation actions)
 
----
+### project_report
 
-## lens_diagnostics
+Project-level orientation from the review graph.
 
-Query pi-lens's diagnostic state. `mode=delta/all` are cache-only and instant; `mode=full` is an expensive active project-wide check.
+- **Parameters:**
+  - `view` (string, optional): Payload tier (`default` or `compact`).
+  - `focus` (string, optional): Optional task hint used only to re-rank sections toward relevant subsystems.
+  - `limit` (number, optional): Scales every ranked section's cap (default 10).
 
-|Parameter        |Type             |Required|Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|-----------------|-----------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`mode`           |string           |No      |`delta` (default): all warnings for the current agent turn — fixable warnings (actionable-warnings cache) AND code quality/style/complexity issues (code-quality-warnings cache). `all`: blocking errors and warnings for every file the agent has EDITED this session. `full`: EXPENSIVE active scan. Runs project-wide LSP diagnostics for all supported files, then merges/deduplicates that with `mode=all` cached runner state.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-|`refreshRunners` |boolean or string|No      |`mode=full` only: `false`/`none` = LSP + widget state only. `cached`/`cheap`/`all` all now trigger a FRESH run of the heavyweight project analyzers (knip, jscpd, madge, gitleaks, govulncheck, trivy, dead-code) in parallel — bounded by the slowest analyzer (trivy's own ~180s ceiling) — instead of reading a possibly-stale session_start cache. `cheap`/`all` additionally refresh the in-process runners (tree-sitter + fact-rules + ast-grep) first.                                                                                                                                                                                                                                                                                                                                                                                                                        |
-|`maxProjectFiles`|number           |No      |`mode=full` `refreshRunners=cheap/all` only: cap project files scanned by the cheap project runners (tree-sitter + fact-rules + ast-grep). Does NOT bound the LSP sweep — use `maxLspFiles` for that.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-|`maxLspFiles`    |number           |No      |`mode=full` only: cap the number of files routed through the language server for the project-wide LSP sweep. On large projects the uncapped sweep can take many minutes; set this to bound it. Default is generous (env `PI_LENS_LSP_WORKSPACE_MAX_FILES`, else 5000).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-|`severity`       |string           |No      |Filter by severity. One of: `error`, `warning`, `all` (default).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|`paths`          |array            |No      |Restrict any mode to an explicit file/directory list (max 200 entries). Entries may be relative (resolved against cwd) or absolute, and a directory entry matches all files under it. `mode=delta/all` are a pure post-filter of cached/session state — they can only show findings for files pi-lens has already dispatched, so an unseen file shows nothing (use `mode=full` for an active scan). `mode=full` actively scans exactly these paths (LSP sweep + cheap in-process runners); cached heavyweight analyzers (jscpd/madge/gitleaks/knip) and the project snapshot are still post-filtered cache reads, never relaunched. Explicitly-listed files are NOT filtered through the project ignore matcher — naming a file is assumed to mean it regardless of `.gitignore`/`.pi-lens.json`; a directory entry's expansion still honors ignore. Nonexistent entries are skipped.|
+### read
 
----
+Read file contents.
 
-## lsp_diagnostics
+- **Parameters:**
+  - `path` (string, required): Path to the file to read (relative or absolute).
+  - `offset` (number, optional): Line number to start reading from (1-indexed).
+  - `limit` (number, optional): Maximum number of lines to read.
 
-Get errors, warnings, and hints from language servers for a file or directory. Use BEFORE running builds to proactively check for issues. Works on directories by auto-detecting file extensions and scanning all matching files.
+### read_enclosing
 
-|Parameter    |Type  |Required|Description                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-|-------------|------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`       |string|No      |File or directory path to check. For directories, all matching source files are scanned.                                                                                                                                                                                                                                                                                                                                                                         |
-|`paths`      |array |No      |Explicit files to check as a bounded-concurrency batch (min 1, max 100). When provided, `path` is ignored.                                                                                                                                                                                                                                                                                                                                                       |
-|`severity`   |string|No      |Filter by severity level. One of: `error`, `warning`, `information`, `hint`, `all` (default).                                                                                                                                                                                                                                                                                                                                                                    |
-|`concurrency`|number|No      |Batch/directory concurrency, in distinct LSP server groups run in parallel (default 8, max 16) — not individual files. Files sharing one server are always processed one at a time against that server regardless of this value; this caps how many DIFFERENT servers run concurrently.                                                                                                                                                                          |
-|`waitMs`     |number|No      |Optional per-file LSP wait budget for batch diagnostics. Uses server defaults when omitted.                                                                                                                                                                                                                                                                                                                                                                      |
-|`serverScope`|string|No      |`primary` (fast, low-noise): only the file's actual language server (e.g. typescript) — for "does this have real type errors". `all` (default): also touches cross-cutting auxiliary scanners (ast-grep, opengrep, zizmor, typos, marksman) attached to this file, including findings for files not yet dispatched this session. Primary confirmation is always reported separately from auxiliary findings regardless of this setting. One of: `primary`, `all`.|
+Return the verbatim source for the smallest useful symbol/callback enclosing a line in a file.
 
----
+- **Parameters:**
+  - `path` (string, required): Absolute or workspace-relative path to the source file.
+  - `line` (number, required): 1-based line number inside the desired symbol/callback.
+  - `maxLines` (number, optional): Optional maximum body size to return.
+  - `aroundLine` (number, optional): Maximum lines for slice mode.
+  - `kinds` (array of strings, optional): Optional kind filter (e.g., function, method, callback, class, object_property_callback).
+  - `onOversize` (string, optional): Behavior when the enclosing body exceeds maxLines (`error`, `slice`, or `outline`).
 
-## symbol_search
+### read_symbol
 
-Ranked identifier search over the persisted word index (BM25 + priors demoting tests/vendor/docs) — answers "which files are most relevant to `<query>`" by identifier. First step of the discovery funnel: `symbol_search` finds candidates, `module_report` explains the file, `read_symbol` reads the body. Complements grep (raw substrings) and `lsp_navigation` (exact references).
+Return the verbatim source of a single named symbol or module_report callback handle in a file.
 
-|Parameter|Type  |Required|Description                                                                                                                                                                                                                    |
-|---------|------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`query`  |string|Yes     |Identifier-ish query, e.g. `authenticate user`                                                                                                                                                                                 |
-|`limit`  |number|No      |Max files to return (default 20).                                                                                                                                                                                              |
-|`paths`  |array |No      |Glob array scoping hits to matching files — same shape/semantics as `ast_grep_search`'s `paths` (a bare directory/file entry scopes its whole subtree). Filters before ranking, so scores within the scoped set are unaffected.|
-|`lang`   |string|No      |Restrict hits to one language, using the same identifiers as `ast_grep_search`'s `lang` param (e.g. `typescript`, `python`, `go`).                                                                                             |
+- **Parameters:**
+  - `path` (string, required): Absolute or workspace-relative path to the source file.
+  - `symbol` (string, required): Exact symbol name or callback handle (e.g., a function, class, type, or module_report callbacks[].name). Accepts a dotted `Class.method` name.
+  - `kind` (string, optional): Optional kind filter (e.g., function, interface, class) to disambiguate.
 
----
+### symbol_search
 
-## project_report
+Ranked identifier search over the persisted word index.
 
-Project-level orientation from the review graph — "orient me in this project" before drilling into any one file. First step of a wider discovery funnel: `project_report` orients, `module_report` explains a file, `read_symbol` reads a body.
+- **Parameters:**
+  - `query` (string, required): Identifier-ish query (e.g., 'authenticate user').
+  - `lang` (string, optional): Restrict hits to one language (e.g., 'typescript', 'python', 'go').
+  - `paths` (array of strings, optional): Glob array scoping hits to matching files.
+  - `limit` (number, optional): Max files to return (default 20).
 
-|Parameter|Type  |Required|Description                                                                                                                                            |
-|---------|------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`limit`  |number|No      |Scales every ranked section's cap (default 10) — a single knob for all sections.                                                                       |
-|`focus`  |string|No      |Optional task hint used only to re-rank sections toward relevant subsystems (does not expand scope or trigger scans).                                  |
-|`view`   |string|No      |Payload tier. `compact` returns a line-oriented text rendering instead of JSON (cheapest option); `default` returns JSON. One of: `default`, `compact`.|
+### web_fetch
 
----
+Fetch and extract the text content of a URL.
 
-## module_report
+- **Parameters:**
+  - `url` (string, required): URL to fetch (must be http or https).
 
-Structured, navigable overview of a source module — a token-efficient substitute for reading the whole file. Returns each symbol's name/kind/signature/line-range (plus a first-line `doc` summary when a doc comment is attached), important inline callbacks/closures/lambdas with stable handles, plus who-uses-this, risk flags, and ranked recommendedReads.
+### ast_grep_dump
 
-|Parameter            |Type   |Required|Description                                                                                                                                                                                                                                                                                                                                              |
-|---------------------|-------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`               |string |Yes     |Absolute or workspace-relative path to the source file.                                                                                                                                                                                                                                                                                                  |
-|`maxRefsPerSymbol`   |number |No      |Cap on who-uses-this entries per symbol (default 10).                                                                                                                                                                                                                                                                                                    |
-|`focus`              |string |No      |Optional task hint used only to rank recommendedReads (does not expand scope or trigger scans).                                                                                                                                                                                                                                                          |
-|`view`               |string |No      |Payload tier. `summary` returns top-level entries/recommendedReads and section provenance with heavy callback/usedBy/blast-radius payloads omitted. `compact` returns a line-oriented text rendering of the full report instead of JSON (one line per symbol/callback, cheapest option). `default` returns JSON. One of: `summary`, `default`, `compact`.|
-|`blastRadius`        |boolean|No      |Include the cross-file blast-radius section: transitive dependents aggregated to ranked file reads ("if you change this, verify these files"). Read-only over the cached graph (omitted when cold).                                                                                                                                                      |
-|`blastRadiusDepth`   |number |No      |Max hops for the blast-radius walk (default 3). Only used with `blastRadius`.                                                                                                                                                                                                                                                                            |
-|`callGraph`          |boolean|No      |Include bounded derived callers/callees from the cached FunctionCallGraph; cold or stale cache state is explicit.                                                                                                                                                                                                                                        |
-|`maxCallGraphEntries`|number |No      |Per-direction cap for call-graph relations (default 20).                                                                                                                                                                                                                                                                                                 |
+Dump the tree-sitter AST for a source snippet to discover node kinds/field names.
 
----
+- **Parameters:** (No parameters defined)
 
-## read_symbol
+### ast_grep_outline
 
-Return the verbatim source of a single named symbol or `module_report` callback handle in a file — a targeted, cheap alternative to reading the whole file. Pair with `module_report`: `module_report` finds the symbol/callback handle, `read_symbol` shows its body.
+Syntax-only file/dir structure (symbols/imports/exports/members) via ast-grep outline — no index/LSP.
 
-|Parameter|Type  |Required|Description                                                                                                                                                                                                                                                      |
-|---------|------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`   |string|Yes     |Absolute or workspace-relative path to the source file.                                                                                                                                                                                                          |
-|`symbol` |string|Yes     |Exact symbol name or callback handle to read (e.g. a function, class, type, or `module_report` callbacks[].name). Accepts a dotted `Class.method` name to resolve a member directly, falling back to a plain top-level lookup when the qualifier doesn't resolve.|
-|`kind`   |string|No      |Optional kind filter (e.g. `function`, `interface`, `class`) to disambiguate when multiple same-file symbols share the requested name. Omitting it returns the first match, same as today.                                                                       |
+- **Parameters:** (No parameters defined)
 
----
+### ast_grep_replace
 
-## read_enclosing
+AST-aware structural code rewrite/refactor using ast-grep patterns.
+- **Parameters:**
+  - `path` (string, required): File or directory to search/rewrite.
+  - `lang` (string, required): Language grammar to use for parsing.
+  - `pattern` (string, required): ast-grep pattern to match.
+  - `rewrite` (string, required): Replacement pattern, referencing the same $NAME / $$$NAME captures used in `pattern`.
+  - `strictness` (string, optional): Matching strictness.
 
-Return the verbatim source for the smallest useful symbol/callback enclosing a line in a file. Use after `ast_grep_search`, diagnostics, or LSP locations when you need exact body text without reading the whole file.
+### ast_grep_search
 
-|Parameter   |Type  |Required|Description                                                                                                                                                                                                                                         |
-|------------|------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`path`      |string|Yes     |Absolute or workspace-relative path to the source file.                                                                                                                                                                                             |
-|`line`      |number|Yes     |1-based line number inside the desired symbol/callback.                                                                                                                                                                                             |
-|`kinds`     |array |No      |Optional kind filter, e.g. `function`, `method`, `callback`, `class`, `object_property_callback`.                                                                                                                                                   |
-|`maxLines`  |number|No      |Optional maximum body size to return. Oversized matches obey `onOversize`.                                                                                                                                                                          |
-|`onOversize`|string|No      |Behavior when the enclosing body exceeds `maxLines`. `error` (default) returns metadata only; `slice` returns a bounded partial read around line; `outline` returns nested symbols/callbacks with read handles. One of: `error`, `slice`, `outline`.|
-|`aroundLine`|number|No      |Maximum lines for `onOversize=slice`; defaults to `maxLines`, then 80.                                                                                                                                                                              |
+Use when searching or replacing code patterns - use ast-grep instead of text search for semantic accuracy.
 
----
+- **Parameters:**
+  - `query` (string, required): Identifier-ish query, e.g. 'authenticate user'.
+  - `lang` (string, optional): Restrict hits to one language.
+  - `paths` (array of strings, optional): Glob array scoping hits to matching files.
+  - `limit` (number, optional): Max files to return.
 
-## pi_lens_activate_tools
+### Skills
 
-Activate one or more situational pi-lens tools that stay registered but inactive by default, so the default tool list stays lean. Call this ONCE with the tools you need before using them — they become callable starting the NEXT turn.
+**android-architecture**
+Expert guidance on setting up and maintaining a modern Android application architecture using Clean Architecture and Hilt. Use this when asked about project structure, module setup, or dependency injection.
 
-|Parameter|Type |Required|Description                                                                                                                                                                                 |
-|---------|-----|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`tools`  |array|Yes     |Names of situational tools to activate. Available tools: `ast_grep_search`, `ast_grep_replace`, `ast_grep_outline`, `ast_grep_dump`, `lsp_navigation`, `lens_diagnostic_mark`. (minItems: 1)|
+**android-data-layer**
+Guidance on implementing the Data Layer using Repository pattern, Room (Local), and Retrofit (Remote) with offline-first synchronization.
 
----
+**android-testing**
+Comprehensive testing strategy involving Unit, Integration, Hilt, and Screenshot tests.
 
-## web_search
+**android-viewmodel**
+Best practices for implementing Android ViewModels, specifically focused on StateFlow for UI state and SharedFlow for one-off events.
 
-Search the web via DuckDuckGo. Returns titles, URLs, and snippets. All content is sanitized against prompt injection before being returned.
+**caveman**
+Ultra-compressed communication mode. Cuts token usage ~75% by speaking like caveman while keeping full technical accuracy. Supports intensity levels: lite, full (default), ultra, wenyan-lite, wenyan-full, wenyan-ultra. Use when user says "caveman mode", "talk like caveman", "use caveman", "less tokens", "be brief", or invokes /caveman. Also auto-triggers when token efficiency is requested.
 
-|Parameter    |Type  |Required|Description                                     |
-|-------------|------|--------|------------------------------------------------|
-|`query`      |string|Yes     |Search query                                    |
-|`max_results`|number|No      |Number of results to return (default 5, max 10).|
+**compose-navigation**
+Implement navigation in Jetpack Compose using Navigation Compose. Use when asked to set up navigation, pass arguments between screens, handle deep links, or structure multi-screen apps.
 
----
+**compose-performance-audit**
+Audit and improve Jetpack Compose runtime performance from code review and architecture. Use when asked to diagnose slow rendering, janky scrolling, excessive recompositions, or performance issues in Compose UI.
 
-## web_fetch
+**compose-ui**
+Best practices for building UI with Jetpack Compose, focusing on state hoisting, detailed performance optimizations, and theming. Use this when writing or refactoring Composable functions.
 
-Fetch and extract the text content of a URL. Blocks private/internal network addresses (SSRF protection). All content is sanitized against prompt injection before being returned.
+**deep-research**
+Multi-round web research using web_search + web_fetch: classify the question into a domain (science, news, politics, tech, entertainment, ...), select the most authoritative sites for that domain, then run targeted site: searches and synthesize a cited report. Use when the user asks for deep research, a thorough investigation, or a well-sourced answer to an open question.
 
-|Parameter|Type  |Required|Description                         |
-|---------|------|--------|------------------------------------|
-|`url`    |string|Yes     |URL to fetch (must be http or https)|
+**gradle-build-performance**
+Debug and optimize Android/Gradle build performance. Use when builds are slow, investigating CI/CD performance, analyzing build scans, or identifying compilation bottlenecks.
 
----
+**kotlin-specialist**
+Provides idiomatic Kotlin implementation patterns including coroutine concurrency, Flow stream handling, multiplatform architecture, Compose UI construction, Ktor server setup, and type-safe DSL design. Use when building Kotlin applications requiring coroutines, multiplatform development, or Android with Compose.
 
-## Summary Table
+**pi-lens-write-ast-grep-rule**
+Use when writing a new pi-lens ast-grep rule YAML file — covers schema, drop path, gotchas, and NAPI runner constraints.
 
-|Tool                    |Primary Purpose                            |
-|------------------------|-------------------------------------------|
-|`read`                  |Read file contents                         |
-|`bash`                  |Execute shell commands                     |
-|`edit`                  |Precise text-based file edits              |
-|`write`                 |Create or overwrite files                  |
-|`ast_edit`              |Structural AST-based code search & rewrite |
-|`lens_diagnostics`      |Query pi-lens diagnostic state             |
-|`lsp_diagnostics`       |Get LSP errors/warnings/hints              |
-|`symbol_search`         |Ranked identifier search across codebase   |
-|`project_report`        |Project-level orientation from review graph|
-|`module_report`         |Navigable file/module overview             |
-|`read_symbol`           |Read a single symbol's body                |
-|`read_enclosing`        |Read enclosing symbol/callback body        |
-|`pi_lens_activate_tools`|Activate situational pi-lens tools         |
-|`web_search`            |Search the web via DuckDuckGo              |
-|`web_fetch`             |Fetch and extract text from a URL          |
+**pi-lens-write-tree-sitter-rule**
+Use when writing a new pi-lens tree-sitter query rule YAML file — covers schema, S-expression syntax, capture names, predicates, and gotchas.
+
+**safe-search-help**
+Reference for pi-safe-search: commands, config keys, and how to persistently edit safe-search.json.
