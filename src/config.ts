@@ -40,7 +40,6 @@ function loadRulesFromFile(filePath: string, debug: boolean = false): Rule[] {
 		if (Array.isArray(parsed.rules)) {
 			if (debug) {
 				log("DEBUG", `Loaded ${parsed.rules.length} rules from ${filePath}`);
-				log("DEBUG", `Rules: ${JSON.stringify(parsed.rules, null, 2)}`);
 			}
 			return parsed.rules;
 		}
@@ -68,7 +67,6 @@ function loadRulesFromSettings(
 					"DEBUG",
 					`Loaded ${permissions.rules.length} rules from settings in ${filePath}`,
 				);
-				log("DEBUG", `Rules: ${JSON.stringify(permissions.rules, null, 2)}`);
 			}
 			return permissions.rules;
 		}
