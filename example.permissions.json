@@ -14,37 +14,10 @@
 		{
 			"action": "deny",
 			"match": {
-				"tool": "read",
-				"paths": ["/home/cadmon", "/etc"]
-			},
-			"message": "Forbid reading in sensitive paths",
-			"priority": 10
-		},
-		{
-			"action": "deny",
-			"match": {
-				"tool": "find",
-				"paths": ["/home/cadmon", "/etc"]
-			},
-			"message": "Forbid find in sensitive paths",
-			"priority": 10
-		},
-		{
-			"action": "deny",
-			"match": {
-				"tool": "grep",
-				"paths": ["/home/cadmon", "/etc"]
-			},
-			"message": "Forbid grep in sensitive paths",
-			"priority": 10
-		},
-		{
-			"action": "deny",
-			"match": {
 				"tool": "*",
-				"paths": ["/home/cadmon", "/etc"]
+				"paths": ["/home/cadmon/*", "/boot/*", "/etc/*"]
 			},
-			"message": "Deny all access to home and /etc directories",
+			"message": "Forbid access for sensitive paths",
 			"priority": 10
 		},
 		{
@@ -59,7 +32,11 @@
 		{
 			"action": "allow",
 			"match": {
-				"tool": "grep",
+				"tool": "bash",
+				"pathParam": "cwd",
+				"params": {
+					"command": "grep"
+				},
 				"paths": ["/data/work/projects"]
 			},
 			"message": "Allow greping in projects files",
@@ -68,7 +45,11 @@
 		{
 			"action": "allow",
 			"match": {
-				"tool": "find",
+				"tool": "bash",
+				"pathParam": "cwd",
+				"params": {
+					"command": "find"
+				},
 				"paths": ["/data/work/projects"]
 			},
 			"message": "Allow finding in projects files",
@@ -87,7 +68,6 @@
 			"action": "allow",
 			"match": {
 				"tool": "symbol_search",
-				"pathParam": "paths",
 				"paths": ["/data/work/projects"]
 			},
 			"message": "Allow searching in projects files",
@@ -107,22 +87,27 @@
 			"match": {
 				"tool": "read_enclosing",
 				"paths": ["/data/work/projects"]
-			}
+			},
+			"message": "Allow reading in projects files",
+			"priority": 5
 		},
 		{
 			"action": "allow",
 			"match": {
 				"tool": "lsp_navigation",
 				"paths": ["/data/work/projects"]
-			}
+			},
+			"message": "Allow navigation in projects files",
+			"priority": 5
 		},
 		{
 			"action": "allow",
 			"match": {
 				"tool": "lsp_diagnostics",
-				"pathParam": "paths",
 				"paths": ["/data/work/projects"]
-			}
+			},
+			"message": "Allow diagnostics in projects files",
+			"priority": 5
 		},
 		{
 			"action": "allow",
@@ -134,10 +119,36 @@
 			"priority": 5
 		},
 		{
+			"action": "allow",
+			"match": {
+				"tool": "bash",
+				"pathParam": "cwd",
+				"params": {
+					"command": "openspec"
+				},
+				"paths": ["/data/work/projects"]
+			},
+			"message": "Allow openspec in projects files",
+			"priority": 5
+		},
+		{
+			"action": "allow",
+			"match": {
+				"tool": "bash",
+				"pathParam": "cwd",
+				"params": {
+					"command": "rtk"
+				},
+				"paths": ["/data/work/projects"]
+			},
+			"message": "Allow rtk in projects files",
+			"priority": 5
+		},
+		{
 			"action": "ask",
 			"match": { "tool": "*" },
-			"message": "No specific rule matched — confirm this action",
-			"priority": -1
+			"message": "No specific rule matched — confirm this action"
 		}
-	]
+	],
+	"debug": true
 }

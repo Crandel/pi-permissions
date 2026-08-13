@@ -62,6 +62,7 @@ export function matchesRule(
 	if (match.paths && match.paths.length > 0) {
 		const pathKey = match.pathParam ?? "path";
 		if (!(pathKey in input)) {
+			if (debug) log("DEBUG", `Missing pathKey: ${pathKey}`);
 			return { matched: false, reason: `Missing path param: ${pathKey}` };
 		}
 		const rawValue = String(input[pathKey]);
@@ -198,6 +199,10 @@ export function evaluate(
 				matchTrace: matchTrace.length > 0 ? matchTrace : undefined,
 			};
 		}
+		log(
+			"DEBUG",
+			`Rule is not matched for tool "${toolName}". Input: ${input}, reason: ${result.reason}`,
+		);
 		if (result.reason) {
 			matchTrace.push(result.reason);
 		}
