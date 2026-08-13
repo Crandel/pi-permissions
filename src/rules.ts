@@ -23,6 +23,7 @@ export function matchesRule(
 	rule: Rule,
 	toolName: string,
 	input: Record<string, unknown>,
+	ctxCwd?: string,
 	debug: boolean = false,
 ): { matched: boolean; reason?: string } {
 	const match = rule.match;
@@ -61,12 +62,16 @@ export function matchesRule(
 
 	if (match.paths && match.paths.length > 0) {
 		const pathKey = match.pathParam ?? "path";
-		if (!(pathKey in input)) {
+		let rawValue: unknown = input[pathKey];
+		if (rawValue === undefined && pathKey === "cwd" && ctxCwd) {
+			rawValue = ctxCwd;
+		}
+		if (rawValue === undefined) {
 			if (debug) log("DEBUG", `Missing pathKey: ${pathKey}`);
 			return { matched: false, reason: `Missing path param: ${pathKey}` };
 		}
-		const rawValue = String(input[pathKey]);
-		const resolved = path.resolve(rawValue);
+		const rawValueStr = String(rawValue);
+		const resolved = path.resolve(rawValueStr);
 		const matched = pathsMatch(
 			match.paths,
 			resolved,
@@ -76,7 +81,7 @@ export function matchesRule(
 		if (!matched) {
 			return {
 				matched: false,
-				reason: `Path mismatch: ${rawValue} does not match any of [${match.paths.join(", ")}]`,
+				reason: `Path mismatch: ${rawValueStr} does not match any of [${match.paths.join(", ")}]`,
 			};
 		}
 	}
@@ -180,12 +185,13 @@ export function evaluate(
 	toolName: string,
 	input: Record<string, unknown>,
 	sortedRules: Rule[],
-	debug: boolean,
+	ctxCwd?: string,
+	debug: boolean = false,
 ): { action: Action; rule: Rule; matchTrace?: string[] } | null {
 	const matchTrace: string[] = [];
 	log("DEBUG", `Tool: ${toolName}. Action:`);
 	for (const rule of sortedRules) {
-		const result = matchesRule(rule, toolName, input, debug);
+		const result = matchesRule(rule, toolName, input, ctxCwd, debug);
 		if (result.matched) {
 			if (debug) {
 				log(

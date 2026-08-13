@@ -37,10 +37,19 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("tool_call", async (event, ctx) => {
 		if (debug) {
-			log("DEBUG", `Tool call: ${event.toolName} (id: ${event.toolCallId})`);
+			log(
+				"DEBUG",
+				`Tool call: ${event.toolName} (id: ${event.toolCallId}), Input: ${JSON.stringify(event)}`,
+			);
 		}
 
-		const result = evaluate(event.toolName, event.input, sortedRules, debug);
+		const result = evaluate(
+			event.toolName,
+			event.input,
+			sortedRules,
+			ctx.cwd,
+			debug,
+		);
 		if (!result) {
 			if (debug) log("DEBUG", "No matching rule found, allowing by default.");
 			return undefined;
