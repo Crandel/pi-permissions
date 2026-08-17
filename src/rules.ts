@@ -207,7 +207,7 @@ export function evaluate(
 		}
 		log(
 			"DEBUG",
-			`Rule is not matched for tool "${toolName}". Input: ${input}, reason: ${result.reason}`,
+			`Rule is not matched for tool "${toolName}". reason: ${result.reason}`,
 		);
 		if (result.reason) {
 			matchTrace.push(result.reason);
