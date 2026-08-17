@@ -169,3 +169,13 @@ pi.events.on("permissions:deny", (event) => {
   console.log(event);
 });
 ```
+
+## CLI flag
+
+The extension registers a `--yolo` boolean flag. When passed, all permission checks are bypassed and every tool call is allowed without prompting:
+
+```bash
+pi --yolo
+```
+
+This is useful for quick prototyping or when you want to temporarily disable the extension without uninstalling it.

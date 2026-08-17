@@ -20,6 +20,12 @@ export default function (pi: ExtensionAPI) {
 	let debug = false;
 	const cache = new SessionCache();
 
+	pi.registerFlag("yolo", {
+		description: "Disable permission checks (allow all tool calls)",
+		type: "boolean",
+		default: false,
+	});
+
 	pi.on("session_start", async (_event, ctx) => {
 		config = loadConfig(
 			ctx.cwd,
@@ -36,6 +42,12 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("tool_call", async (event, ctx) => {
+		if (pi.getFlag("yolo") === true) {
+			if (debug)
+				log("DEBUG", "Yolo mode active — bypassing all permission checks");
+			return undefined;
+		}
+
 		if (debug) {
 			log(
 				"DEBUG",

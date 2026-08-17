@@ -10,7 +10,11 @@ type Handler = (event: any, ctx: any) => Promise<any>;
 
 function setup(
 	rules: unknown[],
-	options: { hasUI?: boolean; selections?: (string | null)[] } = {},
+	options: {
+		hasUI?: boolean;
+		selections?: (string | null)[];
+		yolo?: boolean;
+	} = {},
 ) {
 	const cwd = mkdtempSync(join(tmpdir(), "pi-permissions-events-cwd-"));
 	const home = mkdtempSync(join(tmpdir(), "pi-permissions-events-home-"));
@@ -25,6 +29,8 @@ function setup(
 	const emitted: Array<{ name: string; payload: any }> = [];
 	const handlers: Record<string, Handler> = {};
 	const selections = [...(options.selections ?? [])];
+	const flagValues = new Map<string, boolean | string>();
+	if (options.yolo) flagValues.set("yolo", true);
 	const pi = {
 		on(name: string, handler: Handler) {
 			handlers[name] = handler;
@@ -33,6 +39,14 @@ function setup(
 			emit(name: string, payload: any) {
 				emitted.push({ name, payload });
 			},
+		},
+		registerFlag(name: string, opts: { default?: boolean | string }) {
+			if (opts.default !== undefined && !flagValues.has(name)) {
+				flagValues.set(name, opts.default);
+			}
+		},
+		getFlag(name: string) {
+			return flagValues.get(name);
 		},
 	};
 	permissions(pi as any);
@@ -264,6 +278,30 @@ test("allow everything (this session) bypasses all prompts", async () => {
 	// Second call: different input → cached global allow, no prompt
 	app.emitted.length = 0;
 	const result2 = await app.toolCall({ command: "sudo pwd" }, "second");
+	assert.equal(result2, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		[],
+	);
+});
+
+test("yolo flag bypasses all permission checks", async () => {
+	const app = setup([denyRule, askRule], { yolo: true });
+	await app.start();
+
+	// Deny rule would normally block, but yolo bypasses it
+	const result1 = await app.toolCall(
+		{ command: "rm -rf /tmp/secret" },
+		"yolo-1",
+	);
+	assert.equal(result1, undefined);
+	assert.deepEqual(
+		app.emitted.map((event) => event.name),
+		[],
+	);
+
+	// Ask rule would normally prompt, but yolo bypasses it
+	const result2 = await app.toolCall({ command: "sudo reboot" }, "yolo-2");
 	assert.equal(result2, undefined);
 	assert.deepEqual(
 		app.emitted.map((event) => event.name),
